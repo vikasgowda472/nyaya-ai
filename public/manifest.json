@@ -1,0 +1,17 @@
+{
+  "short_name": "NYAYA AI",
+  "name": "NYAYA AI — Indian Legal Rights & Citizen Intelligence App",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23000000'/><text y='.9em' x='10' font-size='80'>⚖️</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "description": "Native legal rights & statutory intelligence app for India (BNS 2023, IPC, IT Act, Consumer Rights)."
+}

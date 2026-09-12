@@ -1,0 +1,13 @@
+{
+  "id": "bns-2023-sample-section",
+  "jurisdiction": "IN",
+  "law": "Bharatiya Nyaya Sanhita, 2023",
+  "provision": "Section number",
+  "exact_text": "Paste the exact official provision text here.",
+  "official_source_url": "https://www.indiacode.nic.in/",
+  "source_version": "Official publication identifier",
+  "effective_date": "2024-07-01",
+  "topic_tags": ["replace-with-reviewed-topic"],
+  "plain_language": {"en": "Reviewer-approved plain-language explanation."},
+  "review": {"status": "pending", "reviewer_name": "", "reviewed_at": null, "notes": ""}
+}
