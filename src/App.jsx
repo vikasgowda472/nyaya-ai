@@ -12,6 +12,7 @@ import PrivacyDisclaimerModal from './components/PrivacyDisclaimerModal';
 import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
 import { requestVerifiedLegalAnswer, toAnalyzerResult } from './services/verifiedLegalApi';
+import { getCurrentSession, onAuthStateChange, signOut } from './services/authService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('hero'); // 'hero', 'chat', 'analyzer', 'bns', 'cards', 'shields', 'drafts', 'helplines'
@@ -27,32 +28,29 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState('disclaimer'); // 'settings' | 'disclaimer'
 
-  // User Auth State with Persistent LocalStorage Session
+  // Supabase owns session persistence. This state is display-only and never trusted by the API.
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('nyaya_user');
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch (err) {
-      return null;
-    }
-  });
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const handleLoginSuccess = (user) => {
-    setCurrentUser(user);
-    try {
-      localStorage.setItem('nyaya_user', JSON.stringify(user));
-    } catch (err) {
-      console.warn("Failed to persist user session in localStorage", err);
-    }
-  };
+  useEffect(() => {
+    const applySession = (session) => {
+      const user = session?.user;
+      setCurrentUser(user ? {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'NYAYA user',
+        isLoggedIn: true
+      } : null);
+    };
+    getCurrentSession().then(applySession).catch(() => applySession(null));
+    return onAuthStateChange(applySession);
+  }, []);
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
     try {
-      localStorage.removeItem('nyaya_user');
-    } catch (err) {
-      console.warn("Failed to remove user session from localStorage", err);
+      await signOut();
+    } catch (error) {
+      console.warn('Could not sign out of Supabase', error);
     }
   };
 
@@ -183,7 +181,6 @@ export default function App() {
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
       />
 
     </div>

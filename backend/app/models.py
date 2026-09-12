@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, HttpUrl
 
 
 ReviewStatus = Literal["pending", "approved", "revoked"]
+ReviewAction = Literal["submitted", "approved", "revoked", "superseded"]
 
 
 class Review(BaseModel):
@@ -12,6 +13,16 @@ class Review(BaseModel):
     reviewer_name: str = ""
     reviewed_at: datetime | None = None
     notes: str = ""
+
+
+class ReviewEvent(BaseModel):
+    """Immutable record of a human review decision for one source version."""
+
+    action: ReviewAction
+    actor_name: str = Field(min_length=1)
+    occurred_at: datetime
+    notes: str = ""
+    source_version: str = Field(min_length=1)
 
 
 class Provision(BaseModel):
@@ -26,15 +37,23 @@ class Provision(BaseModel):
     topic_tags: list[str] = Field(default_factory=list)
     plain_language: dict[str, str] = Field(default_factory=dict)
     review: Review
+    review_history: list[ReviewEvent] = Field(default_factory=list)
 
     @property
     def answer_eligible(self) -> bool:
+        has_matching_approval_event = any(
+            event.action == "approved"
+            and event.actor_name == self.review.reviewer_name
+            and event.source_version == self.source_version
+            for event in self.review_history
+        )
         return bool(
             self.review.status == "approved"
             and self.review.reviewer_name.strip()
             and self.review.reviewed_at
             and self.exact_text.strip()
             and self.source_version.strip()
+            and has_matching_approval_event
         )
 
 

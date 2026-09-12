@@ -9,5 +9,8 @@
   "effective_date": "2024-07-01",
   "topic_tags": ["replace-with-reviewed-topic"],
   "plain_language": {"en": "Reviewer-approved plain-language explanation."},
-  "review": {"status": "pending", "reviewer_name": "", "reviewed_at": null, "notes": ""}
+  "review": {"status": "pending", "reviewer_name": "", "reviewed_at": null, "notes": ""},
+  "review_history": [
+    {"action": "submitted", "actor_name": "Corpus curator name", "occurred_at": "2026-09-12T00:00:00Z", "notes": "Exact official text captured for review.", "source_version": "Official publication identifier"}
+  ]
 }

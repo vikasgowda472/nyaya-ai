@@ -1,7 +1,10 @@
 import json
 import re
+from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
+
+from pydantic import ValidationError
 
 from .models import Provision
 
@@ -10,15 +13,52 @@ ROOT = Path(__file__).resolve().parent.parent
 PROVISION_DIR = ROOT / "legal-data" / "provisions"
 
 
-def load_provisions() -> list[Provision]:
+@dataclass(frozen=True)
+class CorpusIssue:
+    file: str
+    message: str
+
+
+@dataclass(frozen=True)
+class CorpusLoad:
+    records: list[Provision]
+    issues: list[CorpusIssue]
+
+
+def load_corpus() -> CorpusLoad:
+    """Parse every corpus file without letting a malformed draft become authority."""
     records: list[Provision] = []
+    issues: list[CorpusIssue] = []
     for path in sorted(PROVISION_DIR.glob("*.json")):
-        records.append(Provision.model_validate_json(path.read_text(encoding="utf-8")))
-    return records
+        try:
+            records.append(Provision.model_validate_json(path.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError, ValidationError) as exc:
+            issues.append(CorpusIssue(file=path.name, message=str(exc).splitlines()[0]))
+    return CorpusLoad(records=records, issues=issues)
+
+
+def load_provisions() -> list[Provision]:
+    return load_corpus().records
 
 
 def approved_provisions() -> list[Provision]:
     return [record for record in load_provisions() if record.answer_eligible]
+
+
+def validation_report() -> dict:
+    loaded = load_corpus()
+    approved = [record for record in loaded.records if record.answer_eligible]
+    approval_gaps = [
+        record.id for record in loaded.records
+        if record.review.status == "approved" and not record.answer_eligible
+    ]
+    return {
+        "recordCount": len(loaded.records),
+        "answerEligibleCount": len(approved),
+        "malformedFiles": [{"file": issue.file, "message": issue.message} for issue in loaded.issues],
+        "approvalAuditGaps": approval_gaps,
+        "valid": not loaded.issues and not approval_gaps,
+    }
 
 
 def corpus_version(records: list[Provision] | None = None) -> str:
@@ -31,7 +71,8 @@ def search(query: str, language: str = "en", limit: int = 3) -> list[Provision]:
     tokens = {token for token in re.findall(r"[a-z0-9]+", query.lower()) if len(token) > 2}
     scored: list[tuple[int, Provision]] = []
     for record in approved_provisions():
-        haystack = " ".join([record.law, record.provision, record.exact_text, *record.topic_tags, *record.plain_language.values()]).lower()
+        explanation = record.plain_language.get(language, record.plain_language.get("en", ""))
+        haystack = " ".join([record.law, record.provision, record.exact_text, *record.topic_tags, explanation]).lower()
         score = sum(1 for token in tokens if token in haystack)
         if score:
             scored.append((score, record))
