@@ -22,7 +22,8 @@ export default function Navbar({ activeTab, setActiveTab, onPanic, openSettings,
     { id: 'bns', label: t.navBns },
     { id: 'cards', label: t.navCards },
     { id: 'shields', label: t.navShields },
-    { id: 'drafts', label: t.navDrafts }
+    { id: 'drafts', label: t.navDrafts },
+    ...(currentUser?.role === 'reviewer' || currentUser?.role === 'admin' ? [{ id: 'review', label: 'Review' }] : [])
   ];
 
   return (
@@ -77,8 +78,8 @@ export default function Navbar({ activeTab, setActiveTab, onPanic, openSettings,
                 className="bg-transparent text-white font-medium text-xs focus:outline-none cursor-pointer"
               >
                 <option value="en" className="bg-[#121217] text-white">English</option>
-                <option value="hi" className="bg-[#121217] text-white">हिंदी (Hindi)</option>
-                <option value="kn" className="bg-[#121217] text-white">ಕನ್ನಡ (Kannada)</option>
+                <option value="hi" className="bg-[#121217] text-white">à¤¹à¤¿à¤‚à¤¦à¥€ (Hindi)</option>
+                <option value="kn" className="bg-[#121217] text-white">à²•à²¨à³à²¨à²¡ (Kannada)</option>
               </select>
             </div>
 
@@ -162,7 +163,7 @@ export default function Navbar({ activeTab, setActiveTab, onPanic, openSettings,
             <div className="flex items-center justify-between p-3 rounded-xl bg-[#16161c] border border-white/10 text-xs mb-2">
               <span className="font-semibold text-white flex items-center gap-2">
                 <Globe className="w-4 h-4 text-[#e2b714]" />
-                Language / ಭಾಷೆ
+                Language / à²­à²¾à²·à³†
               </span>
               <select
                 value={lang}
@@ -170,8 +171,8 @@ export default function Navbar({ activeTab, setActiveTab, onPanic, openSettings,
                 className="bg-[#121217] text-white font-medium text-xs p-1.5 rounded-lg border border-white/10"
               >
                 <option value="en">English</option>
-                <option value="hi">हिंदी (Hindi)</option>
-                <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                <option value="hi">à¤¹à¤¿à¤‚à¤¦à¥€ (Hindi)</option>
+                <option value="kn">à²•à²¨à³à²¨à²¡ (Kannada)</option>
               </select>
             </div>
 

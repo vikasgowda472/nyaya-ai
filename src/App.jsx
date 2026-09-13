@@ -11,8 +11,10 @@ import EmergencyHelplines from './components/EmergencyHelplines';
 import PrivacyDisclaimerModal from './components/PrivacyDisclaimerModal';
 import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
+import ReviewerDashboard from './components/ReviewerDashboard';
 import { requestVerifiedLegalAnswer, toAnalyzerResult } from './services/verifiedLegalApi';
 import { getCurrentSession, onAuthStateChange, signOut } from './services/authService';
+import { getReviewerProfile } from './services/reviewerService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('hero'); // 'hero', 'chat', 'analyzer', 'bns', 'cards', 'shields', 'drafts', 'helplines'
@@ -33,14 +35,18 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    const applySession = (session) => {
+    const applySession = async (session) => {
       const user = session?.user;
-      setCurrentUser(user ? {
+      if (!user) { setCurrentUser(null); return; }
+      let profile = null;
+      try { profile = await getReviewerProfile(user.id); } catch { profile = null; }
+      setCurrentUser({
         id: user.id,
         email: user.email,
         name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'NYAYA user',
+        role: profile?.role || 'user',
         isLoggedIn: true
-      } : null);
+      });
     };
     getCurrentSession().then(applySession).catch(() => applySession(null));
     return onAuthStateChange(applySession);
@@ -158,6 +164,8 @@ export default function App() {
         {activeTab === 'drafts' && <DraftGenerator selectedTemplateId={selectedDraftId} lang={lang} />}
 
         {activeTab === 'helplines' && <EmergencyHelplines lang={lang} />}
+
+        {activeTab === 'review' && <ReviewerDashboard currentUser={currentUser} />}
       </main>
 
       {/* Footer */}
