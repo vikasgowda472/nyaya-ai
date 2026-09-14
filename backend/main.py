@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import verified_identity
-from app.corpus import approved_provisions, corpus_version, load_provisions, search, validation_report
+from app.corpus import approved_provisions, corpus_source, corpus_version, load_provisions, search, validation_report
 from app.models import LegalAnswer, LegalAnswerRequest, Refusal
 from app.service import answer
 
@@ -24,7 +24,7 @@ def auth_me(identity: dict = Depends(verified_identity)):
 def status():
     all_records = load_provisions()
     approved = approved_provisions()
-    return {"totalProvisionCount": len(all_records), "verifiedProvisionCount": len(approved), "readyForGroundedAnswers": bool(approved), "corpusVersion": corpus_version(approved)}
+    return {"totalProvisionCount": len(approved) if corpus_source() == "supabase-approved" else len(all_records), "verifiedProvisionCount": len(approved), "readyForGroundedAnswers": bool(approved), "corpusVersion": corpus_version(approved), "corpusSource": corpus_source()}
 
 
 @app.get("/api/v1/corpus/validation")

@@ -7,10 +7,12 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from .models import Provision
+from .supabase_corpus import fetch_approved_provisions, publishing_configured
 
 
 ROOT = Path(__file__).resolve().parent.parent
-PROVISION_DIR = ROOT / "legal-data" / "provisions"
+PROVISION_DIR = ROOT / 'legal-data' / 'provisions'
+STOPWORDS = {'the', 'and', 'for', 'what', 'with', 'from', 'that', 'this', 'are', 'was', 'were', 'can', 'could', 'should', 'would', 'give', 'best', 'legal', 'law', 'act', 'section', 'answer', 'about', 'under', 'without'}
 
 
 @dataclass(frozen=True)
@@ -26,7 +28,7 @@ class CorpusLoad:
 
 
 def load_corpus() -> CorpusLoad:
-    """Parse every corpus file without letting a malformed draft become authority."""
+    """Parse local draft files without letting a malformed draft become authority."""
     records: list[Provision] = []
     issues: list[CorpusIssue] = []
     for path in sorted(PROVISION_DIR.glob("*.json")):
@@ -42,7 +44,14 @@ def load_provisions() -> list[Provision]:
 
 
 def approved_provisions() -> list[Provision]:
+    remote = fetch_approved_provisions()
+    if remote is not None:
+        return remote
     return [record for record in load_provisions() if record.answer_eligible]
+
+
+def corpus_source() -> str:
+    return "supabase-approved" if publishing_configured() else "local-approved"
 
 
 def validation_report() -> dict:
@@ -68,7 +77,7 @@ def corpus_version(records: list[Provision] | None = None) -> str:
 
 
 def search(query: str, language: str = "en", limit: int = 3) -> list[Provision]:
-    tokens = {token for token in re.findall(r"[a-z0-9]+", query.lower()) if len(token) > 2}
+    tokens = {token for token in re.findall(r"[a-z0-9]+", query.lower()) if len(token) > 2 and token not in STOPWORDS}
     scored: list[tuple[int, Provision]] = []
     for record in approved_provisions():
         explanation = record.plain_language.get(language, record.plain_language.get("en", ""))
